@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSE 6040 — Code Practice</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #1c2333;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-dim: #8b949e;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --accent3: #d29922;
+  --danger: #f85149;
+  --radius: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 100;
+}
+header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+h1 { font-size: 1.2rem; font-weight: 600; }
+h1 span { color: var(--text-dim); font-weight: 400; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+.tab {
+  padding: 6px 16px;
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--accent); color: #fff; }
+
+.filters {
+  display: flex;
+  gap: 8px;
+  padding: 16px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-group { display: flex; gap: 4px; flex-wrap: wrap; }
+.filter-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--accent); color: var(--text); }
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filter-label { font-size: 0.78rem; color: var(--text-dim); margin-right: 4px; }
+
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  padding: 8px 0 16px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.stat-val { color: var(--text); font-weight: 600; }
+
+.exercise-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.exercise-header:hover { background: var(--surface2); }
+.exercise-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.exercise-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.badge {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+.badge-topic { background: #1f3a5f; color: var(--accent); }
+.badge-diff-1, .badge-diff-2 { background: #1a3a2a; color: var(--accent2); }
+.badge-diff-3 { background: #3a2f1a; color: var(--accent3); }
+.badge-diff-4, .badge-diff-5 { background: #3a1a1a; color: var(--danger); }
+.badge-pattern { background: var(--surface2); color: var(--text-dim); }
+.badge-pts { background: var(--surface2); color: var(--text-dim); }
+
+.exercise-body { display: none; padding: 16px; }
+.exercise-body.open { display: block; }
+
+.prompt {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+.prompt code {
+  background: var(--bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.82rem;
+}
+
+.editor-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.CodeMirror {
+  height: auto;
+  min-height: 120px;
+  max-height: 500px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--accent); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-success { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+.solution-area {
+  margin-top: 12px;
+  display: none;
+}
+.solution-area.visible { display: block; }
+.solution-code {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.solution-code .CodeMirror { min-height: 60px; }
+.solution-label {
+  font-size: 0.78rem;
+  color: var(--accent3);
+  font-weight: 600;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.completion-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.completion-check input { accent-color: var(--accent2); }
+
+.timer-bar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.timer-bar.active { display: flex; }
+.timer-display {
+  font-family: 'SF Mono', 'Menlo', monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 90px;
+}
+.timer-display.warning { color: var(--accent3); }
+.timer-display.danger { color: var(--danger); }
+.timer-progress {
+  flex: 1;
+  height: 4px;
+  background: var(--surface);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.timer-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 1s linear, background 0.3s;
+  width: 100%;
+}
+.timer-fill.warning { background: var(--accent3); }
+.timer-fill.danger { background: var(--danger); }
+
+.mock-config {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.mock-config h2 { font-size: 1rem; margin-bottom: 16px; }
+.config-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.config-row label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  min-width: 100px;
+}
+.config-row select, .config-row input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.score-display {
+  text-align: center;
+  padding: 40px;
+  display: none;
+}
+.score-display.visible { display: block; }
+.score-big {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--accent2);
+}
+.score-sub {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.drill-prompt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.drill-pattern {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.drill-desc {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+}
+.drill-nav {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 700px) {
+  .exercise-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .exercise-meta { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>CSE 6040 <span>Code Practice</span></h1>
+    <div class="tabs" id="main-tabs">
+      <button class="tab active" data-tab="challenges">Challenges</button>
+      <button class="tab" data-tab="drills">Pattern Drills</button>
+      <button class="tab" data-tab="mock">Mock Exam</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <div id="panel-challenges" class="panel active">
+    <div class="filters">
+      <span class="filter-label">Module:</span>
+      <div class="filter-group" id="module-filters"></div>
+      <span class="filter-label" style="margin-left:12px">Difficulty:</span>
+      <div class="filter-group" id="diff-filters"></div>
+    </div>
+    <div class="stats-bar">
+      <span>Showing <span class="stat-val" id="showing-count">0</span> exercises</span>
+      <span>Completed <span class="stat-val" id="completed-count">0</span></span>
+    </div>
+    <div id="exercise-list"></div>
+  </div>
+
+  <div id="panel-drills" class="panel">
+    <div class="filters">
+      <span class="filter-label">Pattern:</span>
+      <div class="filter-group" id="pattern-filters"></div>
+    </div>
+    <div class="drill-prompt" id="drill-prompt">
+      <div class="drill-pattern" id="drill-pattern-name">Select a pattern to begin</div>
+      <div class="drill-desc" id="drill-desc"></div>
+      <div class="drill-nav">
+        <button class="btn" id="drill-prev" disabled>Prev</button>
+        <span id="drill-counter" style="font-size:0.82rem;color:var(--text-dim);padding:6px">-</span>
+        <button class="btn" id="drill-next" disabled>Next</button>
+        <button class="btn btn-primary" id="drill-shuffle">Shuffle</button>
+      </div>
+    </div>
+    <div id="drill-exercise"></div>
+  </div>
+
+  <div id="panel-mock" class="panel">
+    <div class="mock-config" id="mock-config">
+      <h2>Configure Mock Exam</h2>
+      <div class="config-row">
+        <label for="mock-count">Questions:</label>
+        <select id="mock-count">
+          <option value="5">5</option>
+          <option value="8">8</option>
+          <option value="10" selected>10</option>
+          <option value="15">15</option>
+        </select>
+      </div>
+      <div class="config-row">
+        <label for="mock-time">Time (min):</label>
+        <input type="number" id="mock-time" value="45" min="5" max="180" style="width:80px">
+      </div>
+      <div class="config-row">
+        <label for="mock-topics">Topics:</label>
+        <select id="mock-topics">
+          <option value="all">All Topics</option>
+          <option value="0">Module 0 - Fundamentals</option>
+          <option value="1">Module 1 - Data/Transformation</option>
+        </select>
+      </div>
+      <div class="config-row">
+        <label for="mock-diff">Difficulty:</label>
+        <select id="mock-diff">
+          <option value="all">All</option>
+          <option value="easy">Easy (1-2)</option>
+          <option value="medium">Medium (2-3)</option>
+          <option value="hard">Hard (3-5)</option>
+        </select>
+      </div>
+      <div style="margin-top:20px">
+        <button class="btn btn-primary" id="mock-start">Start Exam</button>
+      </div>
+    </div>
+    <div class="timer-bar" id="timer-bar">
+      <div class="timer-display" id="timer-display">45:00</div>
+      <div class="timer-progress"><div class="timer-fill" id="timer-fill"></div></div>
+      <button class="btn btn-danger" id="mock-end">End Exam</button>
+    </div>
+    <div id="mock-exercises"></div>
+    <div class="score-display" id="score-display">
+      <div class="score-big" id="score-big"></div>
+      <div class="score-sub" id="score-sub"></div>
+      <button class="btn btn-primary" style="margin-top:20px" id="mock-review">Review Answers</button>
+      <button class="btn" style="margin-top:20px" id="mock-reset">New Exam</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ============================================================
+// EXERCISE DATA
+// ============================================================
+const EXERCISES = [
+  // ---- NB1.0: Python Basics ----
+  {id:"1.0-0",nb:"NB1.0",topic:"Python Basics",module:0,diff:1,pts:1,fn:"return_string__FREE",
+   patterns:["fundamentals"],
+   prompt:"Write a function that returns the string \"Hello, world!\".\n\ndef return_string__FREE(string_to_return: str='Hello, world!') -> str",
+   solution:"def return_string__FREE(string_to_return: str='Hello, world!') -> str:\n    return string_to_return"},
+
+  {id:"1.0-1",nb:"NB1.0",topic:"Python Basics",module:0,diff:1,pts:1,fn:"x_float_ex",
+   patterns:["type conversion"],
+   prompt:"Write a function that converts the integer val to a float and returns it.\n\nInputs: val (int)\nReturn: x_float (float)",
+   solution:"def x_float_ex(val: int=0) -> float:\n    return float(val)"},
+
+  {id:"1.0-2",nb:"NB1.0",topic:"Python Basics",module:0,diff:1,pts:1,fn:"strcat_ba_test",
+   patterns:["string operations"],
+   prompt:"Write a function that concatenates input strings b then a and returns the result.\n\nInputs: a (str), b (str)\nReturn: b_a (str) \u2014 the concatenation of b and a",
+   solution:"def strcat_ba_test(a: str, b: str) -> str:\n    return b + a"},
+
+  {id:"1.0-3",nb:"NB1.0",topic:"Python Basics",module:0,diff:2,pts:2,fn:"strcat_list_test",
+   patterns:["string operations","list slicing"],
+   prompt:"Write a function that concatenates a list of strings in reverse order.\n\nInputs: L (list of str)\nReturn: (str) \u2014 the concatenation of the list in reverse order\n\nExample: ['!','world',', ','Hello'] \u2192 'Hello, world!'",
+   solution:"def strcat_list_test(L: list) -> str:\n    return ''.join(L[::-1])"},
+
+  {id:"1.0-4",nb:"NB1.0",topic:"Python Basics",module:0,diff:1,pts:1,fn:"floor_fraction_test",
+   patterns:["integer division"],
+   prompt:"Write a function that returns floor(a/b).\n\nInputs: a (int, a >= 0), b (int, b > 0)\nReturn: floor_a_b (int)\n\nUse the \\(\\lfloor \\frac{a}{b} \\rfloor\\) operation.",
+   solution:"def floor_fraction_test(a: int, b: int) -> int:\n    return a // b"},
+
+  {id:"1.0-5",nb:"NB1.0",topic:"Python Basics",module:0,diff:1,pts:1,fn:"ceiling_fraction_test",
+   patterns:["integer division"],
+   prompt:"Write a function that returns ceiling(a/b).\n\nInputs: a (int, a >= 0), b (int, b > 0)\nReturn: ceiling_a_b (int)\n\nUse the \\(\\lceil \\frac{a}{b} \\rceil\\) operation.\nHint: can you do this with only integer operations (no import needed)?",
+   solution:"def ceiling_fraction_test(a: int, b: int) -> int:\n    return -(a // -b)"},
+
+  {id:"1.0-6",nb:"NB1.0",topic:"Python Basics",module:0,diff:1,pts:1,fn:"report_exam_avg_test",
+   patterns:["f-string formatting"],
+   prompt:"Write a function that returns the average of 3 exam scores as a formatted string.\n\nInputs: a (int), b (int), c (int)\nReturn: (str) \"Your average score: XX\" where XX is the average rounded to 1 decimal place",
+   solution:"def report_exam_avg_test(a: int, b: int, c: int) -> str:\n    return f'Your average score: {round((a + b + c) / 3, 1)}'"},
+
+  {id:"1.0-7",nb:"NB1.0",topic:"Python Basics",module:0,diff:2,pts:2,fn:"count_word_lengths_test",
+   patterns:["list comprehension","string splitting"],
+   prompt:"Write a function that returns a list of word lengths from a string.\n\nInputs: s (str) \u2014 words separated by possibly multiple spaces\nReturn: word_lengths (list of int)\n\nIf input is empty, return an empty list.\nExample: 'the quick  brown   fox' \u2192 [3, 5, 5, 3]",
+   solution:"def count_word_lengths_test(s: str) -> list:\n    return [len(x) for x in s.split()]"},
+
+  // ---- NB1.1: Collections ----
+  {id:"1.1-0",nb:"NB1.1",topic:"Collections",module:0,diff:1,pts:1,fn:"minmax_test",
+   patterns:["tuple construction","min/max"],
+   prompt:"Write a function that returns a tuple of (minimum, maximum) from a list of integers.\n\nInputs: L (list of int)\nReturn: (tuple) \u2014 (min_value, max_value)",
+   solution:"def minmax_test(L: list) -> tuple:\n    return (min(L), max(L))"},
+
+  {id:"1.1-1",nb:"NB1.1",topic:"Collections",module:0,diff:2,pts:2,fn:"remove_all_test",
+   patterns:["list comprehension","filtering"],
+   prompt:"Write a function that returns a copy of list L with all occurrences of x removed.\n\nInputs: L (list of int), x (int)\nReturn: (list) \u2014 L without any occurrences of x",
+   solution:"def remove_all_test(L: list, x: int) -> list:\n    return [val for val in L if val != x]"},
+
+  {id:"1.1-2",nb:"NB1.1",topic:"Collections",module:0,diff:2,pts:2,fn:"compress_vector_test",
+   patterns:["sparse vector","dictionary building","enumerate"],
+   prompt:"Write a function that compresses a vector (list of floats) into a sparse representation.\n\nInputs: L (list of float)\nReturn: d (dict) with:\n  d['inds'] \u2014 list of indices of non-zero values\n  d['vals'] \u2014 list of corresponding non-zero values",
+   solution:"def compress_vector_test(L: list) -> dict:\n    d = {'inds': [], 'vals': []}\n    for i, v in enumerate(L):\n        if v != 0.0:\n            d['inds'].append(i)\n            d['vals'].append(v)\n    return d"},
+
+  {id:"1.1-3",nb:"NB1.1",topic:"Collections",module:0,diff:2,pts:2,fn:"decompress_vector_test",
+   patterns:["sparse vector","zip"],
+   prompt:"Write a function that decompresses a sparse vector back to a full list.\n\nInputs:\n  d (dict) with d['inds'] and d['vals']\n  n (int) \u2014 length of full vector (if None, use max index + 1)\nReturn: L (list of float), length n, zeros except at sparse positions\n\nIMPORTANT: If there are repeated indices, SUM the values.",
+   solution:"def decompress_vector_test(d: dict, n: int=None) -> list:\n    i_max = max(d['inds']) if d['inds'] else -1\n    if n is None:\n        n = i_max + 1\n    L = [0.0] * n\n    for i, v in zip(d['inds'], d['vals']):\n        L[i] += v\n    return L"},
+
+  {id:"1.1-4",nb:"NB1.1",topic:"Collections",module:0,diff:1,pts:1,fn:"find_common_inds_test",
+   patterns:["set intersection"],
+   prompt:"Write a function that returns a sorted list of common indices from two sparse vectors.\n\nInputs: d1 (dict with 'inds','vals'), d2 (dict with 'inds','vals')\nReturn: (list) \u2014 sorted list of indices that appear in both d1 and d2\nIf there are repeated indices, return each common index only once.",
+   solution:"def find_common_inds_test(d1: dict, d2: dict) -> list:\n    return sorted(list(set(d1['inds']) & set(d2['inds'])))"},
+
+  // ---- NB1.2: Nested Data Structures ----
+  {id:"1.2-0",nb:"NB1.2",topic:"Nested Data",module:0,diff:1,pts:1,fn:"get_students",
+   patterns:["list comprehension","nested indexing"],
+   prompt:"Given a nested list 'grades' where row 0 is the header and subsequent rows are [name, score1, score2, ...], return a list of student names.\n\nInputs: grades (list of lists)\nReturn: (list of str) \u2014 student names from top to bottom",
+   solution:"def get_students(grades: list) -> list:\n    return [L[0] for L in grades[1:]]"},
+
+  {id:"1.2-1",nb:"NB1.2",topic:"Nested Data",module:0,diff:1,pts:1,fn:"get_assignments",
+   patterns:["list slicing","nested indexing"],
+   prompt:"Given a nested list 'grades' where row 0 is the header [Student, Exam 1, Exam 2, ...], return a list of assignment names.\n\nInputs: grades (list of lists)\nReturn: (list of str) \u2014 the assignment/exam column names",
+   solution:"def get_assignments(grades: list) -> list:\n    return grades[0][1:]"},
+
+  {id:"1.2-2",nb:"NB1.2",topic:"Nested Data",module:0,diff:2,pts:2,fn:"build_grade_lists",
+   patterns:["dictionary comprehension","nested iteration","type conversion"],
+   prompt:"Build a dict mapping each assignment name to a list of (int) grades.\n\nInputs: grades (nested list: row 0 = header, rows 1+ = [name, score1, score2, ...] where scores are strings)\nReturn: (dict) \u2014 {assignment_name: [int_scores...]}\n\nExample: {'Exam 1': [100, 88, 45], 'Exam 2': [90, 99, 56]}",
+   solution:"def build_grade_lists(grades: list) -> dict:\n    assignments = grades[0][1:]\n    result = {}\n    for j, a in enumerate(assignments):\n        result[a] = [int(grades[i][j+1]) for i in range(1, len(grades))]\n    return result"},
+
+  {id:"1.2-3",nb:"NB1.2",topic:"Nested Data",module:0,diff:2,pts:2,fn:"build_grade_dicts",
+   patterns:["nested dictionary","nested iteration"],
+   prompt:"Build a dict mapping each student to a dict of {assignment: int_score}.\n\nInputs: grades (nested list)\nReturn: (dict) \u2014 {student_name: {assignment: int_score, ...}, ...}\n\nExample: {'Thorny': {'Exam 1': 100, 'Exam 2': 90, 'Exam 3': 80}}",
+   solution:"def build_grade_dicts(grades: list) -> dict:\n    assignments = grades[0][1:]\n    result = {}\n    for row in grades[1:]:\n        result[row[0]] = {assignments[j]: int(row[j+1]) for j in range(len(assignments))}\n    return result"},
+
+  {id:"1.2-4",nb:"NB1.2",topic:"Nested Data",module:0,diff:2,pts:1,fn:"build_avg_by_student",
+   patterns:["dictionary comprehension","averaging"],
+   prompt:"Given a grades dict {student: {assignment: score, ...}}, return {student: avg_score}.\n\nInputs: grades_by_student (dict)\nReturn: (dict) \u2014 {student_name: average_score_as_float}",
+   solution:"def build_avg_by_student(grades_by_student: dict) -> dict:\n    return {s: sum(g.values()) / len(g) for s, g in grades_by_student.items()}"},
+
+  {id:"1.2-5",nb:"NB1.2",topic:"Nested Data",module:0,diff:2,pts:1,fn:"build_grade_by_assign",
+   patterns:["dictionary inversion","nested iteration"],
+   prompt:"Invert a grades dict from {student: {assign: score}} to {assign: {student: score}}.\n\nInputs: grades_by_student (dict)\nReturn: (dict) \u2014 {assignment_name: {student: score, ...}, ...}",
+   solution:"def build_grade_by_assign(grades_by_student: dict) -> dict:\n    result = {}\n    for student, assignments in grades_by_student.items():\n        for assign, score in assignments.items():\n            if assign not in result:\n                result[assign] = {}\n            result[assign][student] = score\n    return result"},
+
+  {id:"1.2-6",nb:"NB1.2",topic:"Nested Data",module:0,diff:2,pts:1,fn:"build_avg_by_assign",
+   patterns:["dictionary comprehension","averaging"],
+   prompt:"Given grades by assignment {assign: {student: score}}, return {assign: avg_score}.\n\nInputs: grades_by_assign (dict)\nReturn: (dict) \u2014 {assignment: average_score_as_float}",
+   solution:"def build_avg_by_assign(grades_by_assign: dict) -> dict:\n    return {a: sum(s.values()) / len(s) for a, s in grades_by_assign.items()}"},
+
+  {id:"1.2-7",nb:"NB1.2",topic:"Nested Data",module:0,diff:3,pts:2,fn:"rank_students_by_avg",
+   patterns:["sorted with key","lambda"],
+   prompt:"Rank students by their average grade, descending.\n\nInputs: avg_by_student (dict of {student: avg_score})\nReturn: (list of tuples) \u2014 [(student, avg), ...] sorted by avg descending",
+   solution:"def rank_students_by_avg(avg_by_student: dict) -> list:\n    return sorted(avg_by_student.items(), key=lambda x: x[1], reverse=True)"},
+
+  // ---- NB2.0: Association Rule Mining ----
+  {id:"2.0-0",nb:"NB2.0",topic:"Association Rules",module:0,diff:2,pts:1,fn:"normalize_string",
+   patterns:["string operations"],
+   prompt:"Write a function that normalizes a string by converting to lowercase and stripping leading/trailing whitespace.\n\nInputs: s (str)\nReturn: (str) \u2014 normalized string",
+   solution:"def normalize_string(s):\n    return s.strip().lower()"},
+
+  {id:"2.0-1",nb:"NB2.0",topic:"Association Rules",module:0,diff:2,pts:2,fn:"get_normalized_items",
+   patterns:["list comprehension","set construction","string splitting"],
+   prompt:"Given a string of comma-separated items, return a set of normalized (lowercase, stripped) items.\n\nInputs: item_string (str) \u2014 e.g. \"Bread, Milk, bread, EGGS\"\nReturn: (set of str) \u2014 unique normalized items",
+   solution:"def get_normalized_items(item_string):\n    return set(normalize_string(item) for item in item_string.split(','))"},
+
+  {id:"2.0-2",nb:"NB2.0",topic:"Association Rules",module:0,diff:3,pts:2,fn:"make_itemsets",
+   patterns:["list comprehension","data cleaning"],
+   prompt:"Given a list of receipt strings (comma-separated items), return a list of normalized item sets (one set per receipt).\n\nInputs: receipts (list of str)\nReturn: (list of set) \u2014 each set contains the normalized items from that receipt",
+   solution:"def make_itemsets(receipts):\n    return [get_normalized_items(r) for r in receipts]"},
+
+  {id:"2.0-3",nb:"NB2.0",topic:"Association Rules",module:0,diff:3,pts:2,fn:"count_item_pairs",
+   patterns:["combinations","defaultdict","counting"],
+   prompt:"Count how many receipts contain each pair of items.\n\nInputs: itemsets (list of sets)\nReturn: (dict) \u2014 keys are frozensets of 2 items, values are counts\n\nHint: use itertools.combinations on each receipt's items.",
+   solution:"from itertools import combinations\nfrom collections import defaultdict\n\ndef count_item_pairs(itemsets):\n    pair_counts = defaultdict(int)\n    for items in itemsets:\n        for pair in combinations(sorted(items), 2):\n            pair_counts[frozenset(pair)] += 1\n    return dict(pair_counts)"},
+
+  {id:"2.0-4",nb:"NB2.0",topic:"Association Rules",module:0,diff:3,pts:2,fn:"find_assoc_rules",
+   patterns:["association rules","confidence calculation"],
+   prompt:"Find association rules with confidence above a threshold.\n\nconfidence(A \u2192 B) = count(A,B) / count(A)\n\nInputs:\n  pair_counts (dict: frozenset \u2192 count)\n  item_counts (dict: item \u2192 count)\n  threshold (float)\nReturn: (list of tuples) \u2014 [(conf, item_a, item_b), ...] where conf >= threshold",
+   solution:"def find_assoc_rules(pair_counts, item_counts, threshold):\n    rules = []\n    for pair, count in pair_counts.items():\n        items = list(pair)\n        a, b = items[0], items[1]\n        conf_ab = count / item_counts[a]\n        if conf_ab >= threshold:\n            rules.append((conf_ab, a, b))\n        conf_ba = count / item_counts[b]\n        if conf_ba >= threshold:\n            rules.append((conf_ba, b, a))\n    return rules"},
+
+  // ---- NB4.0: Floating-Point Representation ----
+  {id:"4.0-0",nb:"NB4.0",topic:"Floating-Point",module:0,diff:3,pts:3,fn:"eval_strint",
+   patterns:["base conversion"],
+   prompt:"Convert a string of digits in a given base to its integer (base-10) value.\n\nInputs: s (str of digit characters), base (int, default 10)\nReturn: (int) \u2014 the base-10 value\n\nExample: eval_strint(\"111\", 2) \u2192 7",
+   solution:"def eval_strint(s, base=10):\n    val = 0\n    for c in s:\n        val = val * base + int(c)\n    return val"},
+
+  {id:"4.0-1",nb:"NB4.0",topic:"Floating-Point",module:0,diff:3,pts:3,fn:"eval_strfrac",
+   patterns:["base conversion","fractional representation"],
+   prompt:"Evaluate a fractional string in a given base. The input is the part AFTER the radix point.\n\nInputs: s (str), base (int, default 10)\nReturn: (float) \u2014 the fractional value\n\nExample: eval_strfrac(\"25\", 10) \u2192 0.25\nExample: eval_strfrac(\"11\", 2) \u2192 0.75  (i.e., 1*2^-1 + 1*2^-2)",
+   solution:"def eval_strfrac(s, base=10):\n    val = 0.0\n    for i, c in enumerate(s):\n        val += int(c) * (base ** -(i + 1))\n    return val"},
+
+  {id:"4.0-2",nb:"NB4.0",topic:"Floating-Point",module:0,diff:4,pts:3,fn:"eval_fp",
+   patterns:["IEEE 754","bit manipulation"],
+   prompt:"Evaluate an IEEE 754 floating-point representation given as a binary string.\n\nInputs: fp_str (str of '0'/'1'), sign_bits (int), exponent_bits (int), significand_bits (int)\nReturn: (float) \u2014 the decoded value\n\nFormula: (-1)^s \u00d7 (1 + fraction) \u00d7 2^(exponent - bias)\nwhere bias = 2^(exponent_bits - 1) - 1",
+   solution:"def eval_fp(fp_str, sign_bits=1, exponent_bits=8, significand_bits=23):\n    s = eval_strint(fp_str[:sign_bits], 2)\n    e = eval_strint(fp_str[sign_bits:sign_bits+exponent_bits], 2)\n    f = eval_strfrac(fp_str[sign_bits+exponent_bits:], 2)\n    bias = (2 ** (exponent_bits - 1)) - 1\n    return ((-1) ** s) * (1 + f) * (2 ** (e - bias))"},
+
+  // ---- NB4.1: Floating-Point Summation ----
+  {id:"4.1-0",nb:"NB4.1",topic:"Floating-Point",module:0,diff:3,pts:2,fn:"alg_sum",
+   patterns:["numerical summation"],
+   prompt:"Implement a simple left-to-right summation (the \"naive\" algorithm).\n\nInputs: vals (list of float)\nReturn: (float) \u2014 the sum\n\nDo NOT use the built-in sum(). Use a loop with an accumulator.",
+   solution:"def alg_sum(vals):\n    s = 0.0\n    for v in vals:\n        s += v\n    return s"},
+
+  {id:"4.1-1",nb:"NB4.1",topic:"Floating-Point",module:0,diff:4,pts:3,fn:"alg_kahan_sum",
+   patterns:["Kahan summation","numerical stability"],
+   prompt:"Implement Kahan (compensated) summation for better numerical accuracy.\n\nInputs: vals (list of float)\nReturn: (float) \u2014 the compensated sum\n\nAlgorithm:\n  s = 0, c = 0 (compensation)\n  for each val:\n    y = val - c\n    t = s + y\n    c = (t - s) - y\n    s = t\n  return s",
+   solution:"def alg_kahan_sum(vals):\n    s = 0.0\n    c = 0.0\n    for v in vals:\n        y = v - c\n        t = s + y\n        c = (t - s) - y\n        s = t\n    return s"},
+
+  // ---- NB5.0: Regex ----
+  {id:"5.0-0",nb:"NB5.0",topic:"Regex",module:1,diff:2,pts:2,fn:"parse_email",
+   patterns:["regex groups","re.match"],
+   prompt:"Use a regex to parse an email address into its user and domain parts.\n\nInputs: s (str) \u2014 an email address like \"user@domain.com\"\nReturn: (tuple) \u2014 (user, domain)\n\nUse re.match with groups.",
+   solution:"import re\n\ndef parse_email(s):\n    m = re.match(r'^([\\w.+-]+)@([\\w.-]+)$', s.strip())\n    return (m.group(1), m.group(2))"},
+
+  {id:"5.0-1",nb:"NB5.0",topic:"Regex",module:1,diff:3,pts:2,fn:"parse_phone",
+   patterns:["regex groups","optional matching"],
+   prompt:"Parse a US phone number into area code, prefix, and line number.\n\nValid formats: (404) 555-1234, 404-555-1234, 404.555.1234, 4045551234\n\nInputs: s (str)\nReturn: (tuple) \u2014 (area_code, prefix, line) as strings",
+   solution:"import re\n\ndef parse_phone(s):\n    m = re.match(r'\\(?(\\d{3})\\)?[\\s.\\-]*(\\d{3})[\\s.\\-]*(\\d{4})', s.strip())\n    return (m.group(1), m.group(2), m.group(3))"},
+
+  {id:"5.0-2",nb:"NB5.0",topic:"Regex",module:1,diff:3,pts:2,fn:"find_all_emails",
+   patterns:["re.findall","regex"],
+   prompt:"Find all email addresses in a block of text.\n\nInputs: text (str)\nReturn: (list of str) \u2014 all email addresses found",
+   solution:"import re\n\ndef find_all_emails(text):\n    return re.findall(r'[\\w.+-]+@[\\w.-]+', text)"},
+
+  {id:"5.0-3",nb:"NB5.0",topic:"Regex",module:1,diff:3,pts:2,fn:"find_all_urls",
+   patterns:["re.findall","regex"],
+   prompt:"Find all URLs (http or https) in a block of text.\n\nInputs: text (str)\nReturn: (list of str) \u2014 all URLs found",
+   solution:"import re\n\ndef find_all_urls(text):\n    return re.findall(r'https?://[^\\s<>\"]+', text)"},
+
+  // ---- NB5.1: HTML Processing with Regex ----
+  {id:"5.1-0",nb:"NB5.1",topic:"HTML/Regex",module:1,diff:4,pts:5,fn:"parse_ranking_html",
+   patterns:["regex","HTML parsing","multi-step extraction"],
+   prompt:"Parse an HTML table of rankings into a list of (rank, name, score) tuples.\n\nThe HTML contains rows like:\n  <tr><td>1</td><td>Alice</td><td>95.5</td></tr>\n\nInputs: html (str) \u2014 HTML string containing a table\nReturn: (list of tuples) \u2014 [(rank_int, name_str, score_float), ...]",
+   solution:"import re\n\ndef parse_ranking_html(html):\n    rows = re.findall(r'<tr>(.*?)</tr>', html, re.DOTALL)\n    results = []\n    for row in rows:\n        cells = re.findall(r'<td>(.*?)</td>', row)\n        if len(cells) >= 3:\n            results.append((int(cells[0]), cells[1], float(cells[2])))\n    return results"},
+
+  // ---- NB6.0: Web Scraping ----
+  {id:"6.0-0",nb:"NB6.0",topic:"Web Scraping",module:1,diff:3,pts:0,fn:"download_page",
+   patterns:["requests","HTTP GET"],
+   prompt:"Write a function that downloads a web page and returns the text content.\n\nInputs: url (str)\nReturn: (str) \u2014 the page content as text\n\nUse the requests library. Raise an exception if the status code is not 200.",
+   solution:"import requests\n\ndef download_page(url):\n    response = requests.get(url)\n    response.raise_for_status()\n    return response.text"},
+
+  // ---- NB6.1: BeautifulSoup ----
+  {id:"6.1-0",nb:"NB6.1",topic:"BeautifulSoup",module:1,diff:3,pts:0,fn:"extract_table_bs",
+   patterns:["BeautifulSoup","find_all","HTML parsing"],
+   prompt:"Use BeautifulSoup to extract all rows from an HTML table.\n\nInputs: html (str) \u2014 HTML containing a <table>\nReturn: (list of lists) \u2014 each inner list is the text content of cells in a row",
+   solution:"from bs4 import BeautifulSoup\n\ndef extract_table_bs(html):\n    soup = BeautifulSoup(html, 'html.parser')\n    table = soup.find('table')\n    rows = []\n    for tr in table.find_all('tr'):\n        cells = [td.get_text(strip=True) for td in tr.find_all(['td', 'th'])]\n        rows.append(cells)\n    return rows"},
+
+  {id:"6.1-1",nb:"NB6.1",topic:"BeautifulSoup",module:1,diff:3,pts:0,fn:"extract_links",
+   patterns:["BeautifulSoup","attribute extraction"],
+   prompt:"Extract all hyperlinks (href values) from an HTML document.\n\nInputs: html (str)\nReturn: (list of str) \u2014 all href attribute values from <a> tags",
+   solution:"from bs4 import BeautifulSoup\n\ndef extract_links(html):\n    soup = BeautifulSoup(html, 'html.parser')\n    return [a['href'] for a in soup.find_all('a', href=True)]"},
+
+  // ---- NB6.2: Web APIs ----
+  {id:"6.2-0",nb:"NB6.2",topic:"Web APIs",module:1,diff:3,pts:0,fn:"query_api",
+   patterns:["requests","JSON parsing","API"],
+   prompt:"Write a function that queries a REST API and returns the parsed JSON.\n\nInputs: url (str), params (dict, optional) \u2014 query parameters\nReturn: (dict or list) \u2014 parsed JSON response",
+   solution:"import requests\n\ndef query_api(url, params=None):\n    response = requests.get(url, params=params)\n    response.raise_for_status()\n    return response.json()"},
+
+  // ---- NB7: Pandas Tidy Data ----
+  {id:"7-0",nb:"NB7",topic:"Pandas",module:1,diff:2,pts:2,fn:"tibbles_to_df",
+   patterns:["pd.DataFrame","dictionary to DataFrame"],
+   prompt:"Convert a dictionary of lists into a Pandas DataFrame.\n\nInputs: data (dict) \u2014 {col_name: [values...], ...}\nReturn: pd.DataFrame",
+   solution:"import pandas as pd\n\ndef tibbles_to_df(data):\n    return pd.DataFrame(data)"},
+
+  {id:"7-1",nb:"NB7",topic:"Pandas",module:1,diff:3,pts:3,fn:"melt_table",
+   patterns:["pd.melt","unpivot"],
+   prompt:"Melt (unpivot) a wide-format DataFrame into long format.\n\nThe DataFrame has an 'id' column and multiple value columns. Melt so that:\n- id_vars = the first column\n- The other column names become a 'variable' column\n- Their values go into a 'value' column\n\nInputs: df (pd.DataFrame)\nReturn: pd.DataFrame in long format",
+   solution:"import pandas as pd\n\ndef melt_table(df):\n    id_col = df.columns[0]\n    return pd.melt(df, id_vars=[id_col], var_name='variable', value_name='value')"},
+
+  {id:"7-2",nb:"NB7",topic:"Pandas",module:1,diff:3,pts:3,fn:"cast_table",
+   patterns:["pivot_table","reshape"],
+   prompt:"Pivot (cast) a long-format DataFrame back to wide format.\n\nThe DataFrame has columns: name, variable, value.\nPivot so that each unique 'variable' becomes its own column.\n\nInputs: df (pd.DataFrame)\nReturn: pd.DataFrame in wide format (reset index)",
+   solution:"import pandas as pd\n\ndef cast_table(df):\n    return df.pivot_table(index='name', columns='variable', values='value', aggfunc='first').reset_index()"},
+
+  {id:"7-3",nb:"NB7",topic:"Pandas",module:1,diff:3,pts:3,fn:"separate_column",
+   patterns:["str.split","expand columns"],
+   prompt:"Split a single column into two columns based on a separator.\n\nInputs: df (pd.DataFrame), col (str), sep (str), names (list of 2 str)\nReturn: pd.DataFrame with the original column replaced by two new columns",
+   solution:"def separate_column(df, col, sep, names):\n    df = df.copy()\n    split = df[col].str.split(sep, expand=True)\n    df[names[0]] = split[0]\n    df[names[1]] = split[1]\n    df.drop(columns=[col], inplace=True)\n    return df"},
+
+  {id:"7-4",nb:"NB7",topic:"Pandas",module:1,diff:3,pts:3,fn:"unite_columns",
+   patterns:["string concatenation","column combining"],
+   prompt:"Unite (concatenate) two columns into one with a separator.\n\nInputs: df (pd.DataFrame), cols (list of 2 str), sep (str), new_name (str)\nReturn: pd.DataFrame with the two columns replaced by the new combined column",
+   solution:"def unite_columns(df, cols, sep, new_name):\n    df = df.copy()\n    df[new_name] = df[cols[0]].astype(str) + sep + df[cols[1]].astype(str)\n    df.drop(columns=cols, inplace=True)\n    return df"},
+
+  {id:"7-5",nb:"NB7",topic:"Pandas",module:1,diff:3,pts:3,fn:"merge_tables",
+   patterns:["pd.merge","join"],
+   prompt:"Merge two DataFrames on a common column.\n\nInputs: left (pd.DataFrame), right (pd.DataFrame), on (str), how (str) \u2014 join type\nReturn: pd.DataFrame \u2014 the merged result",
+   solution:"import pandas as pd\n\ndef merge_tables(left, right, on, how='inner'):\n    return pd.merge(left, right, on=on, how=how)"},
+
+  {id:"7-6",nb:"NB7",topic:"Pandas",module:1,diff:3,pts:3,fn:"groupby_aggregate",
+   patterns:["groupby","aggregation"],
+   prompt:"Group a DataFrame by a column and compute aggregate statistics.\n\nInputs: df (pd.DataFrame), group_col (str), agg_col (str), agg_func (str \u2014 'mean','sum','count','max','min')\nReturn: pd.DataFrame with the grouped results (reset index)",
+   solution:"def groupby_aggregate(df, group_col, agg_col, agg_func):\n    return df.groupby(group_col)[agg_col].agg(agg_func).reset_index()"},
+
+  // ---- NB9.0: SQL Basics ----
+  {id:"9.0-0",nb:"NB9.0",topic:"SQL",module:1,diff:2,pts:1,fn:"sql_create_table",
+   patterns:["SQL CREATE","DDL"],
+   prompt:"Write a SQL statement to create a table named 'students' with columns:\n- id (INTEGER, PRIMARY KEY)\n- name (TEXT, NOT NULL)\n- gpa (REAL)\n\nReturn the SQL as a string.",
+   solution:"sql = \"\"\"\nCREATE TABLE students (\n    id INTEGER PRIMARY KEY,\n    name TEXT NOT NULL,\n    gpa REAL\n);\n\"\"\""},
+
+  {id:"9.0-1",nb:"NB9.0",topic:"SQL",module:1,diff:2,pts:1,fn:"sql_insert",
+   patterns:["SQL INSERT","DML"],
+   prompt:"Write a SQL INSERT statement to add a row to the 'students' table.\n\nValues: id=1, name='Alice', gpa=3.8\n\nReturn the SQL as a string.",
+   solution:"sql = \"INSERT INTO students (id, name, gpa) VALUES (1, 'Alice', 3.8);\""},
+
+  // ---- NB9.1: SQL Queries ----
+  {id:"9.1-0",nb:"NB9.1",topic:"SQL",module:1,diff:2,pts:1,fn:"sql_select_basic",
+   patterns:["SQL SELECT","WHERE"],
+   prompt:"Write a query to select all complaints of type 'Noise' from a table called 'complaints'.\n\nThe table has columns: id, complaint_type, borough, created_date.\nReturn rows where complaint_type = 'Noise'.",
+   solution:"sql = \"SELECT * FROM complaints WHERE complaint_type = 'Noise';\""},
+
+  {id:"9.1-1",nb:"NB9.1",topic:"SQL",module:1,diff:2,pts:1,fn:"sql_count_by_group",
+   patterns:["SQL GROUP BY","COUNT"],
+   prompt:"Write a query to count complaints by borough.\n\nTable: complaints (id, complaint_type, borough, created_date)\nReturn borough and count, ordered by count descending.",
+   solution:"sql = \"\"\"\nSELECT borough, COUNT(*) as complaint_count\nFROM complaints\nGROUP BY borough\nORDER BY complaint_count DESC;\n\"\"\""},
+
+  {id:"9.1-2",nb:"NB9.1",topic:"SQL",module:1,diff:3,pts:1,fn:"sql_join",
+   patterns:["SQL JOIN"],
+   prompt:"Write a query that joins 'complaints' with 'agencies' on agency_id to get the agency name for each complaint.\n\nTables:\n- complaints (id, complaint_type, agency_id)\n- agencies (id, agency_name)\n\nReturn complaint_type and agency_name.",
+   solution:"sql = \"\"\"\nSELECT c.complaint_type, a.agency_name\nFROM complaints c\nJOIN agencies a ON c.agency_id = a.id;\n\"\"\""},
+
+  {id:"9.1-3",nb:"NB9.1",topic:"SQL",module:1,diff:3,pts:1,fn:"sql_having",
+   patterns:["SQL HAVING","GROUP BY"],
+   prompt:"Write a query to find boroughs with more than 1000 complaints.\n\nTable: complaints (id, complaint_type, borough)\nReturn borough and count, only for boroughs exceeding 1000.",
+   solution:"sql = \"\"\"\nSELECT borough, COUNT(*) as cnt\nFROM complaints\nGROUP BY borough\nHAVING cnt > 1000\nORDER BY cnt DESC;\n\"\"\""},
+
+  {id:"9.1-4",nb:"NB9.1",topic:"SQL",module:1,diff:3,pts:1,fn:"sql_subquery",
+   patterns:["SQL subquery"],
+   prompt:"Write a query to find all complaints in the borough with the most complaints.\n\nTable: complaints (id, complaint_type, borough)\nUse a subquery to find the top borough, then filter.",
+   solution:"sql = \"\"\"\nSELECT *\nFROM complaints\nWHERE borough = (\n    SELECT borough\n    FROM complaints\n    GROUP BY borough\n    ORDER BY COUNT(*) DESC\n    LIMIT 1\n);\n\"\"\""},
+
+  // ---- NB9.2: Advanced SQL ----
+  {id:"9.2-0",nb:"NB9.2",topic:"SQL",module:1,diff:3,pts:1,fn:"sql_case_when",
+   patterns:["SQL CASE WHEN"],
+   prompt:"Write a query that categorizes students by GPA:\n- gpa >= 3.5 \u2192 'Honors'\n- gpa >= 3.0 \u2192 'Good Standing'\n- else \u2192 'Probation'\n\nTable: students (id, name, gpa)\nReturn name and a new column 'status'.",
+   solution:"sql = \"\"\"\nSELECT name,\n    CASE\n        WHEN gpa >= 3.5 THEN 'Honors'\n        WHEN gpa >= 3.0 THEN 'Good Standing'\n        ELSE 'Probation'\n    END AS status\nFROM students;\n\"\"\""},
+
+  {id:"9.2-1",nb:"NB9.2",topic:"SQL",module:1,diff:4,pts:1,fn:"sql_window_rank",
+   patterns:["SQL window function","RANK"],
+   prompt:"Write a query that ranks students by GPA within each department.\n\nTable: students (id, name, gpa, department)\nReturn name, department, gpa, and rank (1 = highest GPA in that department).",
+   solution:"sql = \"\"\"\nSELECT name, department, gpa,\n    RANK() OVER (PARTITION BY department ORDER BY gpa DESC) as gpa_rank\nFROM students;\n\"\"\""},
+
+  {id:"9.2-2",nb:"NB9.2",topic:"SQL",module:1,diff:4,pts:1,fn:"sql_cte",
+   patterns:["SQL CTE","WITH clause"],
+   prompt:"Use a CTE (Common Table Expression) to find the average GPA per department, then join it back to get each student's deviation from their department average.\n\nTable: students (id, name, gpa, department)\nReturn name, department, gpa, dept_avg, and deviation (gpa - dept_avg).",
+   solution:"sql = \"\"\"\nWITH dept_avg AS (\n    SELECT department, AVG(gpa) as avg_gpa\n    FROM students\n    GROUP BY department\n)\nSELECT s.name, s.department, s.gpa,\n    d.avg_gpa as dept_avg,\n    s.gpa - d.avg_gpa as deviation\nFROM students s\nJOIN dept_avg d ON s.department = d.department;\n\"\"\""},
+
+  {id:"9.2-3",nb:"NB9.2",topic:"SQL",module:1,diff:4,pts:1,fn:"sql_parameterized",
+   patterns:["SQL injection prevention","parameterized queries"],
+   prompt:"Write Python code that safely queries a SQLite database using parameterized queries.\n\nWrite a function that takes a sqlite3 connection and a borough name, and returns all complaints for that borough. Use ? placeholders to prevent SQL injection.\n\nInputs: conn (sqlite3.Connection), borough (str)\nReturn: list of rows",
+   solution:"import sqlite3\n\ndef safe_query(conn, borough):\n    cursor = conn.execute(\n        \"SELECT * FROM complaints WHERE borough = ?\",\n        (borough,)\n    )\n    return cursor.fetchall()"},
+];
+
+// ============================================================
+// APP STATE
+// ============================================================
+const state = {
+  activeTab: 'challenges',
+  moduleFilter: 'all',
+  diffFilter: 'all',
+  patternFilter: null,
+  completed: JSON.parse(localStorage.getItem('cse6040_completed') || '{}'),
+  editors: {},
+  solutionEditors: {},
+  drillExercises: [],
+  drillIndex: 0,
+  drillEditor: null,
+  drillSolEditor: null,
+  mockActive: false,
+  mockExercises: [],
+  mockEditors: {},
+  mockTimer: null,
+  mockTimeLeft: 0,
+  mockTotalTime: 0,
+};
+
+function saveCompleted() {
+  localStorage.setItem('cse6040_completed', JSON.stringify(state.completed));
+}
+
+// ============================================================
+// SAFE DOM HELPERS
+// ============================================================
+function createTextEl(tag, text, className) {
+  const el = document.createElement(tag);
+  el.textContent = text;
+  if (className) el.className = className;
+  return el;
+}
+
+function escapeForDisplay(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+// ============================================================
+// RENDERING — CHALLENGES
+// ============================================================
+function getFilteredExercises() {
+  return EXERCISES.filter(function(ex) {
+    if (state.moduleFilter !== 'all' && ex.module !== parseInt(state.moduleFilter)) return false;
+    if (state.diffFilter !== 'all' && ex.diff !== parseInt(state.diffFilter)) return false;
+    return true;
+  });
+}
+
+function buildFilterButton(text, dataAttr, value, isActive) {
+  const btn = document.createElement('button');
+  btn.className = 'filter-btn' + (isActive ? ' active' : '');
+  btn.textContent = text;
+  btn.dataset[dataAttr] = value;
+  return btn;
+}
+
+function renderFilters() {
+  const mf = document.getElementById('module-filters');
+  mf.replaceChildren();
+  var moduleOpts = [{label:'All',val:'all'},{label:'M0 Fund.',val:'0'},{label:'M1 Data',val:'1'}];
+  moduleOpts.forEach(function(opt) {
+    var btn = buildFilterButton(opt.label, 'mf', opt.val, state.moduleFilter === opt.val);
+    btn.addEventListener('click', function() {
+      state.moduleFilter = opt.val;
+      renderFilters();
+      renderExercises();
+    });
+    mf.appendChild(btn);
+  });
+
+  const df = document.getElementById('diff-filters');
+  df.replaceChildren();
+  var allBtn = buildFilterButton('All', 'df', 'all', state.diffFilter === 'all');
+  allBtn.addEventListener('click', function() {
+    state.diffFilter = 'all';
+    renderFilters();
+    renderExercises();
+  });
+  df.appendChild(allBtn);
+  for (var d = 1; d <= 5; d++) {
+    (function(diff) {
+      var btn = buildFilterButton(String(diff), 'df', String(diff), state.diffFilter === String(diff));
+      btn.addEventListener('click', function() {
+        state.diffFilter = String(diff);
+        renderFilters();
+        renderExercises();
+      });
+      df.appendChild(btn);
+    })(d);
+  }
+}
+
+function buildExerciseCard(ex) {
+  var card = document.createElement('div');
+  card.className = 'exercise-card';
+
+  // Header
+  var header = document.createElement('div');
+  header.className = 'exercise-header';
+
+  var titleDiv = document.createElement('div');
+  titleDiv.className = 'exercise-title';
+  var checkIcon = document.createElement('span');
+  if (state.completed[ex.id]) {
+    checkIcon.style.color = 'var(--accent2)';
+    checkIcon.textContent = '\u2713';
+  } else {
+    checkIcon.style.color = 'var(--border)';
+    checkIcon.textContent = '\u25CB';
+  }
+  titleDiv.appendChild(checkIcon);
+  var titleText = document.createElement('span');
+  titleText.textContent = ex.nb + ' \u2014 ' + ex.fn;
+  titleDiv.appendChild(titleText);
+
+  var metaDiv = document.createElement('div');
+  metaDiv.className = 'exercise-meta';
+  var topicBadge = createTextEl('span', ex.topic, 'badge badge-topic');
+  metaDiv.appendChild(topicBadge);
+  var diffBadge = createTextEl('span', 'Diff ' + ex.diff, 'badge badge-diff-' + ex.diff);
+  metaDiv.appendChild(diffBadge);
+  ex.patterns.forEach(function(p) {
+    metaDiv.appendChild(createTextEl('span', p, 'badge badge-pattern'));
+  });
+  if (ex.pts) {
+    metaDiv.appendChild(createTextEl('span', ex.pts + 'pt' + (ex.pts > 1 ? 's' : ''), 'badge badge-pts'));
+  }
+
+  header.appendChild(titleDiv);
+  header.appendChild(metaDiv);
+
+  // Body
+  var body = document.createElement('div');
+  body.className = 'exercise-body';
+  body.id = 'body-' + ex.id;
+
+  var prompt = document.createElement('div');
+  prompt.className = 'prompt';
+  prompt.id = 'prompt-' + ex.id;
+  prompt.textContent = ex.prompt;
+
+  var editorWrap = document.createElement('div');
+  editorWrap.className = 'editor-wrap';
+  var textarea = document.createElement('textarea');
+  textarea.id = 'editor-' + ex.id;
+  editorWrap.appendChild(textarea);
+
+  var btnRow = document.createElement('div');
+  btnRow.className = 'btn-row';
+  var clearBtn = document.createElement('button');
+  clearBtn.className = 'btn';
+  clearBtn.textContent = 'Clear';
+  clearBtn.addEventListener('click', function() { clearEditor(ex.id); });
+  var solBtn = document.createElement('button');
+  solBtn.className = 'btn btn-primary';
+  solBtn.textContent = 'Show Solution';
+  solBtn.addEventListener('click', function() { showSolution(ex.id); });
+  btnRow.appendChild(clearBtn);
+  btnRow.appendChild(solBtn);
+
+  var solArea = document.createElement('div');
+  solArea.className = 'solution-area';
+  solArea.id = 'sol-' + ex.id;
+  var solLabel = createTextEl('div', 'Solution', 'solution-label');
+  var solCode = document.createElement('div');
+  solCode.className = 'solution-code';
+  var solTextarea = document.createElement('textarea');
+  solTextarea.id = 'sol-editor-' + ex.id;
+  solCode.appendChild(solTextarea);
+  solArea.appendChild(solLabel);
+  solArea.appendChild(solCode);
+
+  var checkDiv = document.createElement('div');
+  checkDiv.className = 'completion-check';
+  var checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.id = 'check-' + ex.id;
+  checkbox.checked = !!state.completed[ex.id];
+  checkbox.addEventListener('change', function() { toggleComplete(ex.id); });
+  var checkLabel = document.createElement('label');
+  checkLabel.htmlFor = 'check-' + ex.id;
+  checkLabel.textContent = 'Mark as confident (can write this without help)';
+  checkDiv.appendChild(checkbox);
+  checkDiv.appendChild(checkLabel);
+
+  body.appendChild(prompt);
+  body.appendChild(editorWrap);
+  body.appendChild(btnRow);
+  body.appendChild(solArea);
+  body.appendChild(checkDiv);
+
+  header.addEventListener('click', function() { toggleExercise(ex.id, ex); });
+
+  card.appendChild(header);
+  card.appendChild(body);
+  return card;
+}
+
+function renderExercises() {
+  var exercises = getFilteredExercises();
+  var list = document.getElementById('exercise-list');
+  list.replaceChildren();
+
+  document.getElementById('showing-count').textContent = exercises.length;
+  document.getElementById('completed-count').textContent =
+    Object.values(state.completed).filter(Boolean).length + ' / ' + EXERCISES.length;
+
+  exercises.forEach(function(ex) {
+    list.appendChild(buildExerciseCard(ex));
+  });
+}
+
+function toggleExercise(id, ex) {
+  var body = document.getElementById('body-' + id);
+  var wasOpen = body.classList.contains('open');
+  body.classList.toggle('open');
+
+  if (!wasOpen && !state.editors[id]) {
+    var mode = ex.topic === 'SQL' ? 'text/x-sql' : 'python';
+    state.editors[id] = CodeMirror.fromTextArea(document.getElementById('editor-' + id), {
+      mode: mode, theme: 'dracula', lineNumbers: true,
+      tabSize: 4, indentUnit: 4, viewportMargin: Infinity,
+    });
+    var saved = localStorage.getItem('cse6040_work_' + id);
+    if (saved) state.editors[id].setValue(saved);
+    state.editors[id].on('change', function() {
+      localStorage.setItem('cse6040_work_' + id, state.editors[id].getValue());
+    });
+    renderMathInElement(document.getElementById('prompt-' + id), {
+      delimiters: [
+        {left: '\\(', right: '\\)', display: false},
+        {left: '\\[', right: '\\]', display: true},
+      ]
+    });
+  }
+}
+
+function showSolution(id) {
+  var area = document.getElementById('sol-' + id);
+  area.classList.toggle('visible');
+  var ex = EXERCISES.find(function(e) { return e.id === id; });
+  if (!state.solutionEditors[id]) {
+    var mode = ex.topic === 'SQL' ? 'text/x-sql' : 'python';
+    state.solutionEditors[id] = CodeMirror.fromTextArea(document.getElementById('sol-editor-' + id), {
+      mode: mode, theme: 'dracula', lineNumbers: true,
+      readOnly: true, viewportMargin: Infinity,
+    });
+    state.solutionEditors[id].setValue(ex.solution);
+  }
+}
+
+function clearEditor(id) {
+  if (state.editors[id]) {
+    state.editors[id].setValue('');
+    localStorage.removeItem('cse6040_work_' + id);
+  }
+}
+
+function toggleComplete(id) {
+  state.completed[id] = document.getElementById('check-' + id).checked;
+  saveCompleted();
+  renderExercises();
+}
+
+// ============================================================
+// PATTERN DRILLS
+// ============================================================
+function renderPatternFilters() {
+  var allPatterns = [];
+  var seen = {};
+  EXERCISES.forEach(function(e) {
+    e.patterns.forEach(function(p) {
+      if (!seen[p]) { seen[p] = true; allPatterns.push(p); }
+    });
+  });
+  allPatterns.sort();
+
+  var pf = document.getElementById('pattern-filters');
+  pf.replaceChildren();
+  allPatterns.forEach(function(p) {
+    var btn = buildFilterButton(p, 'pf', p, state.patternFilter === p);
+    btn.addEventListener('click', function() {
+      state.patternFilter = p;
+      state.drillExercises = EXERCISES.filter(function(e) { return e.patterns.indexOf(p) >= 0; });
+      state.drillIndex = 0;
+      renderPatternFilters();
+      renderDrill();
+    });
+    pf.appendChild(btn);
+  });
+}
+
+function renderDrill() {
+  var el = document.getElementById('drill-exercise');
+  var nameEl = document.getElementById('drill-pattern-name');
+  var descEl = document.getElementById('drill-desc');
+  var ctrEl = document.getElementById('drill-counter');
+
+  if (!state.drillExercises.length) {
+    nameEl.textContent = state.patternFilter || 'Select a pattern to begin';
+    descEl.textContent = state.patternFilter ? 'No exercises for this pattern' : '';
+    ctrEl.textContent = '-';
+    el.replaceChildren();
+    return;
+  }
+
+  var ex = state.drillExercises[state.drillIndex];
+  nameEl.textContent = state.patternFilter;
+  descEl.textContent = ex.nb + ' \u2014 ' + ex.fn;
+  ctrEl.textContent = (state.drillIndex + 1) + ' / ' + state.drillExercises.length;
+
+  document.getElementById('drill-prev').disabled = state.drillIndex === 0;
+  document.getElementById('drill-next').disabled = state.drillIndex >= state.drillExercises.length - 1;
+
+  el.replaceChildren();
+
+  var card = document.createElement('div');
+  card.className = 'exercise-card';
+  var body = document.createElement('div');
+  body.className = 'exercise-body open';
+
+  var prompt = document.createElement('div');
+  prompt.className = 'prompt';
+  prompt.id = 'prompt-drill';
+  prompt.textContent = ex.prompt;
+
+  var editorWrap = document.createElement('div');
+  editorWrap.className = 'editor-wrap';
+  var textarea = document.createElement('textarea');
+  textarea.id = 'editor-drill';
+  editorWrap.appendChild(textarea);
+
+  var btnRow = document.createElement('div');
+  btnRow.className = 'btn-row';
+  var clearBtn = document.createElement('button');
+  clearBtn.className = 'btn';
+  clearBtn.textContent = 'Clear';
+  clearBtn.addEventListener('click', function() {
+    if (state.drillEditor) state.drillEditor.setValue('');
+  });
+  var solBtn = document.createElement('button');
+  solBtn.className = 'btn btn-primary';
+  solBtn.textContent = 'Show Solution';
+  solBtn.addEventListener('click', function() {
+    var solArea = document.getElementById('sol-drill');
+    solArea.classList.toggle('visible');
+    if (!state.drillSolEditor) {
+      var m = ex.topic === 'SQL' ? 'text/x-sql' : 'python';
+      state.drillSolEditor = CodeMirror.fromTextArea(document.getElementById('sol-editor-drill'), {
+        mode: m, theme: 'dracula', lineNumbers: true, readOnly: true, viewportMargin: Infinity,
+      });
+      state.drillSolEditor.setValue(ex.solution);
+    }
+  });
+  btnRow.appendChild(clearBtn);
+  btnRow.appendChild(solBtn);
+
+  var solArea = document.createElement('div');
+  solArea.className = 'solution-area';
+  solArea.id = 'sol-drill';
+  var solLabel = createTextEl('div', 'Solution', 'solution-label');
+  var solCode = document.createElement('div');
+  solCode.className = 'solution-code';
+  var solTextarea = document.createElement('textarea');
+  solTextarea.id = 'sol-editor-drill';
+  solCode.appendChild(solTextarea);
+  solArea.appendChild(solLabel);
+  solArea.appendChild(solCode);
+
+  body.appendChild(prompt);
+  body.appendChild(editorWrap);
+  body.appendChild(btnRow);
+  body.appendChild(solArea);
+  card.appendChild(body);
+  el.appendChild(card);
+
+  var mode = ex.topic === 'SQL' ? 'text/x-sql' : 'python';
+  state.drillEditor = CodeMirror.fromTextArea(document.getElementById('editor-drill'), {
+    mode: mode, theme: 'dracula', lineNumbers: true, tabSize: 4, indentUnit: 4, viewportMargin: Infinity,
+  });
+  state.drillSolEditor = null;
+
+  renderMathInElement(document.getElementById('prompt-drill'), {
+    delimiters: [{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+  });
+}
+
+document.getElementById('drill-prev').addEventListener('click', function() {
+  if (state.drillIndex > 0) { state.drillIndex--; renderDrill(); }
+});
+document.getElementById('drill-next').addEventListener('click', function() {
+  if (state.drillIndex < state.drillExercises.length - 1) { state.drillIndex++; renderDrill(); }
+});
+document.getElementById('drill-shuffle').addEventListener('click', function() {
+  if (state.drillExercises.length) {
+    state.drillExercises = state.drillExercises.slice().sort(function() { return Math.random() - 0.5; });
+    state.drillIndex = 0;
+    renderDrill();
+  }
+});
+
+// ============================================================
+// MOCK EXAM
+// ============================================================
+document.getElementById('mock-start').addEventListener('click', startMockExam);
+document.getElementById('mock-end').addEventListener('click', endMockExam);
+document.getElementById('mock-reset').addEventListener('click', resetMock);
+document.getElementById('mock-review').addEventListener('click', reviewMock);
+
+function startMockExam() {
+  var count = parseInt(document.getElementById('mock-count').value);
+  var time = parseInt(document.getElementById('mock-time').value);
+  var topicFilter = document.getElementById('mock-topics').value;
+  var diffFilter = document.getElementById('mock-diff').value;
+
+  var pool = EXERCISES.slice();
+  if (topicFilter !== 'all') pool = pool.filter(function(e) { return e.module === parseInt(topicFilter); });
+  if (diffFilter === 'easy') pool = pool.filter(function(e) { return e.diff <= 2; });
+  else if (diffFilter === 'medium') pool = pool.filter(function(e) { return e.diff >= 2 && e.diff <= 3; });
+  else if (diffFilter === 'hard') pool = pool.filter(function(e) { return e.diff >= 3; });
+
+  pool.sort(function() { return Math.random() - 0.5; });
+  state.mockExercises = pool.slice(0, Math.min(count, pool.length));
+  state.mockTotalTime = time * 60;
+  state.mockTimeLeft = state.mockTotalTime;
+  state.mockActive = true;
+  state.mockEditors = {};
+
+  document.getElementById('mock-config').style.display = 'none';
+  document.getElementById('timer-bar').classList.add('active');
+  document.getElementById('score-display').classList.remove('visible');
+
+  renderMockExercises();
+  startTimer();
+}
+
+function renderMockExercises() {
+  var el = document.getElementById('mock-exercises');
+  el.replaceChildren();
+  state.mockExercises.forEach(function(ex, i) {
+    var card = document.createElement('div');
+    card.className = 'exercise-card';
+
+    var header = document.createElement('div');
+    header.className = 'exercise-header';
+    header.style.cursor = 'default';
+    var titleDiv = document.createElement('div');
+    titleDiv.className = 'exercise-title';
+    titleDiv.appendChild(createTextEl('span', 'Problem ' + (i + 1) + ': ' + ex.fn));
+    var metaDiv = document.createElement('div');
+    metaDiv.className = 'exercise-meta';
+    metaDiv.appendChild(createTextEl('span', ex.topic, 'badge badge-topic'));
+    metaDiv.appendChild(createTextEl('span', 'Diff ' + ex.diff, 'badge badge-diff-' + ex.diff));
+    header.appendChild(titleDiv);
+    header.appendChild(metaDiv);
+
+    var body = document.createElement('div');
+    body.className = 'exercise-body open';
+    body.id = 'mock-body-' + i;
+    var prompt = document.createElement('div');
+    prompt.className = 'prompt';
+    prompt.id = 'prompt-mock-' + i;
+    prompt.textContent = ex.prompt;
+    var editorWrap = document.createElement('div');
+    editorWrap.className = 'editor-wrap';
+    var textarea = document.createElement('textarea');
+    textarea.id = 'editor-mock-' + i;
+    editorWrap.appendChild(textarea);
+    body.appendChild(prompt);
+    body.appendChild(editorWrap);
+
+    card.appendChild(header);
+    card.appendChild(body);
+    el.appendChild(card);
+
+    setTimeout(function() {
+      var mode = ex.topic === 'SQL' ? 'text/x-sql' : 'python';
+      state.mockEditors[i] = CodeMirror.fromTextArea(document.getElementById('editor-mock-' + i), {
+        mode: mode, theme: 'dracula', lineNumbers: true,
+        tabSize: 4, indentUnit: 4, viewportMargin: Infinity,
+      });
+      renderMathInElement(document.getElementById('prompt-mock-' + i), {
+        delimiters: [{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]
+      });
+    }, 50);
+  });
+}
+
+function startTimer() {
+  var display = document.getElementById('timer-display');
+  var fill = document.getElementById('timer-fill');
+
+  function tick() {
+    if (!state.mockActive) return;
+    state.mockTimeLeft--;
+    var m = Math.floor(state.mockTimeLeft / 60);
+    var s = state.mockTimeLeft % 60;
+    display.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+
+    var pct = (state.mockTimeLeft / state.mockTotalTime) * 100;
+    fill.style.width = pct + '%';
+
+    if (pct < 10) {
+      display.className = 'timer-display danger';
+      fill.className = 'timer-fill danger';
+    } else if (pct < 25) {
+      display.className = 'timer-display warning';
+      fill.className = 'timer-fill warning';
+    } else {
+      display.className = 'timer-display';
+      fill.className = 'timer-fill';
+    }
+
+    if (state.mockTimeLeft <= 0) {
+      endMockExam();
+      return;
+    }
+    state.mockTimer = setTimeout(tick, 1000);
+  }
+  tick();
+}
+
+function endMockExam() {
+  state.mockActive = false;
+  if (state.mockTimer) clearTimeout(state.mockTimer);
+  document.getElementById('timer-bar').classList.remove('active');
+
+  var el = document.getElementById('score-display');
+  el.classList.add('visible');
+  var elapsed = state.mockTotalTime - state.mockTimeLeft;
+  var m = Math.floor(elapsed / 60);
+  var s = elapsed % 60;
+  document.getElementById('score-big').textContent = state.mockExercises.length + ' Problems';
+  document.getElementById('score-sub').textContent = 'Time used: ' + m + 'm ' + s + 's \u2014 Review your answers against the solutions below.';
+}
+
+function reviewMock() {
+  document.getElementById('score-display').classList.remove('visible');
+  state.mockExercises.forEach(function(ex, i) {
+    var body = document.getElementById('mock-body-' + i);
+    if (body.querySelector('.solution-area')) return;
+
+    var solArea = document.createElement('div');
+    solArea.className = 'solution-area visible';
+    var solLabel = createTextEl('div', 'Solution', 'solution-label');
+    var solCode = document.createElement('div');
+    solCode.className = 'solution-code';
+    var solTextarea = document.createElement('textarea');
+    solTextarea.id = 'sol-editor-mock-' + i;
+    solCode.appendChild(solTextarea);
+    solArea.appendChild(solLabel);
+    solArea.appendChild(solCode);
+    body.appendChild(solArea);
+
+    setTimeout(function() {
+      var mode = ex.topic === 'SQL' ? 'text/x-sql' : 'python';
+      var ed = CodeMirror.fromTextArea(document.getElementById('sol-editor-mock-' + i), {
+        mode: mode, theme: 'dracula', lineNumbers: true,
+        readOnly: true, viewportMargin: Infinity,
+      });
+      ed.setValue(ex.solution);
+    }, 50);
+  });
+}
+
+function resetMock() {
+  state.mockActive = false;
+  if (state.mockTimer) clearTimeout(state.mockTimer);
+  document.getElementById('mock-config').style.display = 'block';
+  document.getElementById('timer-bar').classList.remove('active');
+  document.getElementById('score-display').classList.remove('visible');
+  document.getElementById('mock-exercises').replaceChildren();
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    state.activeTab = tab.dataset.tab;
+  });
+});
+
+// ============================================================
+// INIT
+// ============================================================
+renderFilters();
+renderExercises();
+renderPatternFilters();
+</script>
+</body>
+</html>
